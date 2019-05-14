@@ -10,7 +10,6 @@ int lives;
 int time_limit;
 int matches;
 int counter;
-int support;
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
@@ -43,21 +42,14 @@ void generic_loop(int cell, int button){
   lcd.setCursor(cell, 1);
   lcd.write(byte(1));
   counter = 0;
-  support = 1;
   while(digitalRead(button) == LOW && counter < time_limit){
     counter++;
     delay(1);
     if((button != button1 && digitalRead(button1) == HIGH) || (button != button2 && digitalRead(button2) == HIGH) || (button != button3 && digitalRead(button3) == HIGH) || (button != button4 && digitalRead(button4) == HIGH) || (button != button5 && digitalRead(button5) == HIGH)){
-      while(support < 2){
-        lives--;
-        support++;
-      }
-      counter++;
-      lcd.setCursor(4, 0);
-      lcd.print(lives);
+      lives--;
+      break;
     }
   }
-  
   clean();
   if(counter == time_limit)
     lives--;
