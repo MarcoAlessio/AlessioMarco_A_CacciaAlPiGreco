@@ -13,22 +13,23 @@ int time_limit;
 int matches;
 int counter;
 int button;
+int n_random;
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 //Creo 3 byte personalizzati, rispettivamente il cuore per le vite e i bonus, il PiGreco e la X per il malus
 byte Heart[8]   = { B00000, B01010, B11111, B11111, B11111, B01110, B00100, B00000 };
 byte PiGreco[8] = { B00000, B11111, B01010, B01010, B01010, B01010, B00000, B00000 };
-byte Malus[8]   = { B00000, B10001, B01010, B00100, B01010, B10001, B00000, B00000 };
+byte Malus[8]   = { B01110, B11111, B10101, B11111, B11111, B01010, B01110, B00000 };
 
 void setup() {
   // put your setup code here, to run once:
-  button_start = 8;
-  button1      = 6;
-  button2      = 4;
-  button3      = 12;
-  button4      = 10;
-  button5      = 2;
+  button_start  = 8;
+  button1       = 6;
+  button2       = 4;
+  button3       = 12;
+  button4       = 10;
+  button5       = 2;
   pinMode(button_start, INPUT);
   pinMode(button1, INPUT);
   pinMode(button2, INPUT);
@@ -45,15 +46,15 @@ void setup() {
 
 void generic_loop(int cell, int simbol){
   //Assegno alla variabile button il valore corrispondente
-  if(cell < 3)
+  if(cell == 0)
     button = button1;
-  else if(cell >= 3 && cell < 7)
+  else if(cell == 4)
     button = button2;
-  else if(cell >= 7 && cell < 10)
+  else if(cell == 8)
     button = button3;
-  else if(cell >= 10 && cell < 13)
+  else if(cell == 12)
     button = button4;
-  else if(cell >= 13 && cell <= 16)
+  else if(cell == 16)
     button = button5;
   delay(2000);
   lcd.setCursor(cell, 1);
@@ -63,7 +64,7 @@ void generic_loop(int cell, int simbol){
     counter++;
     delay(1);
     //Se l'utente preme un bottone differente da quello assegnato sopra gli verrà tolta una vita
-    if((button != button1 && digitalRead(button1) == HIGH) || (button != button2 && digitalRead(button2) == HIGH) || (button != button3 && digitalRead(button3) == HIGH) || (button != button4 && digitalRead(button4) == HIGH) || (button != button5 && digitalRead(button5) == HIGH)){
+    if(button != button1 && digitalRead(button1) == HIGH || button != button2 && digitalRead(button2) == HIGH || button != button3 && digitalRead(button3) == HIGH || button != button4 && digitalRead(button4) == HIGH || button != button5 && digitalRead(button5) == HIGH){
       lives--;
       break;
     }
@@ -74,12 +75,14 @@ void generic_loop(int cell, int simbol){
     lcd.print(" ");
   }
   //Se esce il malus e l'utente non preme alcun bottone gli verrà tolta una vita, tranne se il carattere è il malus
-  if(counter == time_limit && simbol != byte(2))
+  if(counter == time_limit && simbol == byte(1))
     lives--;
   else{
     //Se il carattere è il bonus e l'utente riesce a prenderlo gli si aggiunge una vita, altrimenti sale semplicemente di livello e il tempo limite decrementa
-    if(simbol == byte(0))
+    if(counter < time_limit && simbol == byte(0))
       lives++;
+    else if(counter < time_limit && simbol == byte(2))
+      lives--;
     time_limit -= 100;
     matches++;
   }
@@ -107,26 +110,31 @@ void start(){
   lcd.print("GAME = " + (String)matches);
 }
 
+int positions(){
+  int pos = random(5);
+  if(pos == 1)
+    return 0;
+  else if(pos == 2)
+    return 4;
+  else if(pos == 3)
+    return 8;
+  else if(pos == 4)
+    return 12;
+  else if(pos == 5)
+    return 16;
+}
+
 void loop() {
   // put your main code here, to run repeatedly:
   if(lives > 0){
-    //Estraggo 7 numeri random, se è un numero da 1 a 5 parte il ciclo con il PiGreco e la rispettiva posizione, se è 6 o 7 parte lo stesso ciclo con rispettivamente malus e bonus e una
-    //posizione random nella seconda riga del display
-    int n_random = random(7);
-    if(n_random == 1)
-      generic_loop(0, byte(1));
-    else if(n_random == 2)
-      generic_loop(4, byte(1));
-    else if(n_random == 3)
-      generic_loop(8, byte(1));
-    else if(n_random == 4)
-      generic_loop(12, byte(1));
-    else if(n_random == 5)
-      generic_loop(16, byte(1));
+    //Estraggo 7 numeri random, se è un numero da 1 a 5 parte il ciclo con il PiGreco e la rispettiva posizione, se è 6 o 7 parte lo stesso ciclo con rispettivamente malus e bonus
+    n_random = random(1, 8);
+    if(n_random < 6)
+      generic_loop(positions(), byte(1));
     else if(n_random == 6)
-      generic_loop(random(16), byte(0));
+      generic_loop(positions(), byte(0));
     else if(n_random == 7)
-      generic_loop(random(16), byte(2));
+      generic_loop(positions(), byte(2));
   }
   else{
     lcd.clear();
